@@ -1,8 +1,11 @@
 from google.cloud import firestore
+from datetime import datetime
+
 db = firestore.Client()
 
 def save_audit(event_type, payload):
     db.collection("events").add({
-        "type": event_type,
-        "payload": payload
+        "event_type": event_type,
+        "payload": payload,
+        "created_at": datetime.utcnow()
     })

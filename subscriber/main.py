@@ -4,6 +4,7 @@ import base64, json
 from services.audit import save_audit
 from services.email import send_email
 from services.notify import notify_manager
+from services.bigquery_writer import push_to_bigquery
 
 app = FastAPI()
 
@@ -22,8 +23,10 @@ async def receive_event(request: Request):
     event_type = event["event_type"]
     payload = event["payload"]
 
-    save_audit(event_type, payload)
-    send_email(event_type, payload)
-    notify_manager(event_type, payload)
+    # 🔹 SAME FLOW (extended)
+    save_audit(event_type, payload)        # Firestore
+    push_to_bigquery(event_type, payload)  # BigQuery
+    send_email(event_type, payload)         # Email
+    notify_manager(event_type, payload)    # Slack / logs
 
-    return {"status": "processed"}  # ACK
+    return {"status": "processed"}

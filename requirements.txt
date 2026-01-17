@@ -3,3 +3,5 @@ uvicorn
 google-cloud-firestore
 google-cloud-pubsub
 pydantic
+google-cloud-bigquery
+sendgrid
