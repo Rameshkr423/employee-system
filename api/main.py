@@ -44,6 +44,7 @@ def view_employee(emp_id: str):
 def hr_list_employees():
     return list_employees()
 
+
 @app.post("/hr/leave")
 def hr_mark_leave(data: LeaveRequest):
     leave = {
