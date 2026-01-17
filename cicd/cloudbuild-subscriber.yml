@@ -26,3 +26,7 @@ steps:
 
 images:
   - us-west1-docker.pkg.dev/all-in-one-cloud/employee-repo/employee-subscriber
+
+options:
+
+  logging: CLOUD_LOGGING_ONLY
