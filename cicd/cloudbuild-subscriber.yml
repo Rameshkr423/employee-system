@@ -1,0 +1,28 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - us-west1-docker.pkg.dev/all-in-one-cloud/employee-repo/employee-subscriber
+      - -f
+      - docker/subscriber.Dockerfile
+      - .
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - us-west1-docker.pkg.dev/all-in-one-cloud/employee-repo/employee-subscriber
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - employee-subscriber
+      - --image=us-west1-docker.pkg.dev/all-in-one-cloud/employee-repo/employee-subscriber
+      - --region=us-west1
+      - --platform=managed
+      - --allow-unauthenticated
+
+images:
+  - us-west1-docker.pkg.dev/all-in-one-cloud/employee-repo/employee-subscriber

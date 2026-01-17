@@ -1,35 +1,29 @@
-from google.cloud import pubsub_v1
-import json
-from google.cloud import firestore
+from fastapi import FastAPI, Request
+import base64, json
 
-PROJECT_ID = "all-in-one-cloud"
-SUB_ID = "employee-events-sub"
+from services.audit import save_audit
+from services.email import send_email
+from services.notify import notify_manager
 
-db = firestore.Client()
+app = FastAPI()
 
-def callback(message):
-    data = json.loads(message.data.decode())
+@app.post("/pubsub/receive")
+async def receive_event(request: Request):
+    envelope = await request.json()
+    message = envelope.get("message", {})
+    data = message.get("data")
 
-    event = {
-        "type": data.get("event_type"),
-        "payload": data.get("payload")
-    }
+    if not data:
+        return {"status": "ignored"}
 
-    db.collection("events").add(event)
+    decoded = base64.b64decode(data).decode("utf-8")
+    event = json.loads(decoded)
 
-    print("Event received:", event["type"])
-    message.ack()
+    event_type = event["event_type"]
+    payload = event["payload"]
 
-subscriber = pubsub_v1.SubscriberClient()
-sub_path = subscriber.subscription_path(PROJECT_ID, SUB_ID)
+    save_audit(event_type, payload)
+    send_email(event_type, payload)
+    notify_manager(event_type, payload)
 
-streaming_pull_future = subscriber.subscribe(sub_path, callback)
-
-print("Subscriber running... (Press CTRL+C to stop)")
-
-# 🔥 THIS LINE KEEPS THE PROCESS ALIVE
-try:
-    streaming_pull_future.result()
-except KeyboardInterrupt:
-    streaming_pull_future.cancel()
-    print("Subscriber stopped")
+    return {"status": "processed"}  # ACK
