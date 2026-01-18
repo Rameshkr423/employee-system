@@ -38,7 +38,6 @@ def push_to_bigquery(event_type: str, payload):
         row = {
             "event_type": event_type,
             "emp_id": safe_payload.get("emp_id"),
-            "payload": safe_payload,                     # JSON column
             "created_at": datetime.utcnow().isoformat()
         }
 
