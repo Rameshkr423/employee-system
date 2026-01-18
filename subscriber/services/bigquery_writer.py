@@ -1,20 +1,11 @@
 from google.cloud import bigquery
 from datetime import datetime, date
-import json
 
-# BigQuery client
 client = bigquery.Client()
-
-# Fully qualified table ID
 TABLE_ID = "all-in-one-cloud.employee_audit.events"
 
 
 def make_json_safe(obj):
-    """
-    Recursively convert Python objects to JSON-safe values.
-    - datetime/date -> ISO 8601 string
-    - dict/list -> deep conversion
-    """
     if isinstance(obj, dict):
         return {k: make_json_safe(v) for k, v in obj.items()}
     elif isinstance(obj, list):
@@ -26,27 +17,21 @@ def make_json_safe(obj):
 
 
 def push_to_bigquery(event_type: str, payload: dict):
-    """
-    Insert employee event into BigQuery.
-    This function MUST NEVER crash the subscriber.
-    """
     try:
-        # 🔹 Make payload 100% JSON-safe
         safe_payload = make_json_safe(payload)
 
-        # 🔹 BigQuery row
         row = {
             "event_type": event_type,
             "emp_id": safe_payload.get("emp_id"),
-            "payload": safe_payload,          # JSON column
-            "created_at": datetime.utcnow()   # TIMESTAMP column - this needs conversion too!
+            "payload": safe_payload,                 # JSON column
+            "created_at": datetime.utcnow().isoformat()
         }
 
-        # 🔹 FIX: Convert the entire row to JSON-safe format
-        safe_row = make_json_safe(row)
-
-        # 🔹 Insert row
-        errors = client.insert_rows_json(TABLE_ID, [safe_row])
+        errors = client.insert_rows_json(
+            TABLE_ID,
+            [row],
+            ignore_unknown_values=True
+        )
 
         if errors:
             print("❌ BigQuery insert error:", errors)
@@ -54,5 +39,4 @@ def push_to_bigquery(event_type: str, payload: dict):
             print("✅ BigQuery insert success")
 
     except Exception as e:
-        # NEVER crash Pub/Sub subscriber
-        print("❌ BigQuery exception:", e)
+        print("❌ BigQuery exception:", str(e))
