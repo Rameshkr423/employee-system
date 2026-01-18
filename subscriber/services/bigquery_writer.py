@@ -39,11 +39,14 @@ def push_to_bigquery(event_type: str, payload: dict):
             "event_type": event_type,
             "emp_id": safe_payload.get("emp_id"),
             "payload": safe_payload,          # JSON column
-            "created_at": datetime.utcnow()   # TIMESTAMP column
+            "created_at": datetime.utcnow()   # TIMESTAMP column - this needs conversion too!
         }
 
+        # 🔹 FIX: Convert the entire row to JSON-safe format
+        safe_row = make_json_safe(row)
+
         # 🔹 Insert row
-        errors = client.insert_rows_json(TABLE_ID, [row])
+        errors = client.insert_rows_json(TABLE_ID, [safe_row])
 
         if errors:
             print("❌ BigQuery insert error:", errors)
