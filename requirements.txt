@@ -1,7 +1,13 @@
 fastapi
-uvicorn
+uvicorn[standard]
+
 google-cloud-firestore
 google-cloud-pubsub
-pydantic
 google-cloud-bigquery
+
+pydantic
+email-validator
+
+passlib[bcrypt]
+
 sendgrid
